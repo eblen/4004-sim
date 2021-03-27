@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 
 #include "types.h"
@@ -9,29 +11,36 @@ class ROM4001 : public iodevice
     public:
     void load(std::array<Byte,256> &&d) {data = std::move(d);}
     void set_iotype(IOTYPE t) {iotype = t;}
-    // This chip takes ownership of the connected device
-    void connect(std::unique_ptr<iodevice> &&d) {ioport = std::move(d);}
 
-    // ROM just forwards IO to/from the connected device
+    Byte read(Byte b) {return data[b];}
+
+    void connect(std::shared_ptr<iodevice> d) {device = d;}
+
+    // Just forward input from the connected device
     Nibble port_input()
     {
-        if (!ioport)
+        if (!device)
             throw std::runtime_error("ROM port not connected");
         if (iotype != IOTYPE::in)
             throw std::runtime_error("ROM port not configured for input");
-        return ioport->port_input();
+        return device->port_input();
     }
-    void port_output(Nibble out)
+
+    // Just forwards output to the connected device
+    void port_output(Nibble val)
     {
-        if (!ioport)
+        if (!device)
             throw std::runtime_error("ROM port not connected");
         if (iotype != IOTYPE::out)
             throw std::runtime_error("ROM port not configured for output");
-        ioport->port_output(out);
+        device->port_output(val);
     }
 
     private:
     std::array<Byte,256> data;
     IOTYPE iotype{IOTYPE::in};
-    std::unique_ptr<iodevice> ioport;
+    std::shared_ptr<iodevice> device;
 };
+
+using rom_rack = std::vector<ROM4001>;
+
