@@ -1,15 +1,19 @@
-#ifndef IODEVICE_H
-#define IODEVICE_H
+#pragma once
 
 #include "types.h"
 
 class iodevice
 {
-  public:
-  virtual void   port_output(Nibble i) = 0;
-  virtual Nibble port_input ()         = 0;
-
-  virtual ~iodevice() {}
+    public:
+    virtual void   port_output(Nibble val) = 0;
+    virtual Nibble port_input ()           = 0;
+    virtual ~iodevice() {}
 };
 
-#endif
+class testdevice
+{
+    public:
+    virtual Bit test() = 0;
+    virtual ~testdevice() {}
+};
+
