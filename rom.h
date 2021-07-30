@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include "types.h"
 #include "iodevice.h"
@@ -9,7 +10,7 @@ enum class IOTYPE {in,out};
 class ROM4001 : public iodevice
 {
     public:
-    void load(std::array<Byte,256> &&d) {data = std::move(d);}
+    void load(const std::array<Byte,256>& d) {data = d;}
     void set_iotype(IOTYPE t) {iotype = t;}
 
     Byte read(Byte b) {return data[b];}
@@ -43,4 +44,4 @@ class ROM4001 : public iodevice
 };
 
 using rom_rack = std::vector<ROM4001>;
-
+void load_rom_rack(std::shared_ptr<rom_rack> rr, const std::vector<Byte>& bytes);

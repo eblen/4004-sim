@@ -9,6 +9,7 @@
 #include "cpu.h"
 #include "keyboard.h"
 #include "tape.h"
+#include "file_io.h"
 
 struct Typewriter
 {
@@ -41,6 +42,8 @@ struct Typewriter
 int main()
 {
   Typewriter t;
+  load_rom_rack(t.roms, ebin_to_bytes("./tw.ebin"));
+
   std::thread cpu_thread(&CPU4004::run, t.cpu);
   std::thread kb_thread(&Keyboard::run, t.kb);
   cpu_thread.join();
