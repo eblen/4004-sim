@@ -29,11 +29,6 @@ static Byte get_low_byte(Addr a)
     return static_cast<Byte>(a);
 }
 
-static Byte get_next_to_low_byte(Addr a)
-{
-    return static_cast<Byte>(a >> 8);
-}
-
 static char byte_to_char(Byte b)
 {
     return static_cast<char>(b);

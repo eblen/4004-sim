@@ -5,15 +5,19 @@ void CPU4004::run()
     while(true)
     {
         auto [b1,b2] = read_instr();
+        ip++;
         exec_instr(b1,b2);
     }
 }
 
 std::tuple<Byte,Byte> CPU4004::read_instr()
 {
-    Nibble rom_num = get_high_nibble(ip);
-    return {roms->at(rom_num).read(get_low_byte(ip)),
-            roms->at(rom_num).read(get_next_to_low_byte(ip))};
+    Nibble rom_num  = get_high_nibble(ip);
+    Byte   rom_addr = get_low_byte(ip);
+    // TODO: Figure out how to properly handle a 2-byte instruction at the end
+    // of a ROM. (It's probably not supported, so not too important.)
+    return {roms->at(rom_num).read(rom_addr),
+            roms->at(rom_num).read((rom_addr+1) % 256)};
 }
 
 void CPU4004::exec_instr(Byte b1, Byte b2)
