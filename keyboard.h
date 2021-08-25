@@ -17,7 +17,7 @@ class Keyboard : public iodevice, public testdevice
         Nibble ret_val = buffer[0];
         buffer[0] = buffer[1];
         buffer[1] = 0;
-        if (num_input_nibbles > 0) num_input_nibbles--;
+        num_input_nibbles--;
         return ret_val;
     }
 
@@ -39,15 +39,21 @@ class Keyboard : public iodevice, public testdevice
         if (num_input_nibbles > 0) return;
 
         Byte b = static_cast<Byte>(c);
-        buffer[0] = get_low_nibble(b);
-        buffer[1] = get_high_nibble(b);
+        buffer[0] = get_high_nibble_from_byte(b);
+        buffer[1] = get_low_nibble(b);
         num_input_nibbles = 2;
     }
 
     void run()
     {
         initscr();
-        while(true) read_char(getch());
+        while(true)
+        {
+            // TODO: Figure out why "flushinp" is needed.
+            // (Otherwise, there is a single character delay.)
+            flushinp();
+            read_char(getch());
+        }
     }
 
     private:

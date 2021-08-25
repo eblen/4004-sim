@@ -14,12 +14,24 @@ static Byte nibbles_to_byte(Nibble n1, Nibble n2)
     return ((n1 << 4) | (n2 & 0b00001111));
 }
 
+static Addr bytes_to_addr(Byte b1, Byte b2)
+{
+    Addr a1 = static_cast<Addr>(b1 & 0x0F) << 8;
+    Addr a2 = static_cast<Addr>(b2);
+    return a1 | a2;
+}
+
 static Nibble get_low_nibble (Byte b)
 {
     return (b & 0b00001111);
 }
 
-static Nibble get_high_nibble(Addr a)
+static Nibble get_high_nibble_from_byte(Byte b)
+{
+    return (b & 0b11110000) >> 4;
+}
+
+static Nibble get_high_nibble_from_addr(Addr a)
 {
     return static_cast<Nibble>( (a & 0x0F00) >> 8 );
 }

@@ -12,7 +12,7 @@ void CPU4004::run()
 
 std::tuple<Byte,Byte> CPU4004::read_instr()
 {
-    Nibble rom_num  = get_high_nibble(ip);
+    Nibble rom_num  = get_high_nibble_from_addr(ip);
     Byte   rom_addr = get_low_byte(ip);
     // TODO: Figure out how to properly handle a 2-byte instruction at the end
     // of a ROM. (It's probably not supported, so not too important.)
@@ -74,6 +74,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // JUN
     else if (b1 < 0b01010000)
     {
+        ip = bytes_to_addr(b1,b2);
     }
 
     // JMS
@@ -127,6 +128,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // WMP
         case 0b11100001:
+            rams->at(sel_ram).port_output(acc);
             break;
         // WRR
         case 0b11100010:
@@ -154,6 +156,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // RDR
         case 0b11101010:
+            acc = roms->at(sel_rom).port_input();
             break;
         // ADM
         case 0b11101011:
