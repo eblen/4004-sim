@@ -1,11 +1,32 @@
 #include "cpu.h"
 
+bool is_two_byte_instr(Byte b)
+{
+    Nibble opr = get_high_nibble_from_byte(b);
+    Nibble opa = get_low_nibble(b);
+
+    switch (opr)
+    {
+        case 1: // JCN
+        case 4: // JUN
+        case 5: // JMS
+        case 7: // ISZ
+            return true;
+        case 2:
+             if (opa % 2 == 0) return true; // FIM
+             else return false; // SRC
+        default:
+            return false;
+    }
+}
+
 void CPU4004::run()
 {
     while(true)
     {
         auto [b1,b2] = read_instr();
         ip++;
+        if (is_two_byte_instr(b1)) ip++;
         exec_instr(b1,b2);
     }
 }
