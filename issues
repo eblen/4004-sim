@@ -1,18 +1,25 @@
 Issue 1:  Typewriter application initially stuck
 Priority: medium
+Status:   fixed
 
 The typewriter does not print the first character typed until a second character
 is typed. Afterwards, it seems to work correctly.
+
+Fixed by simply refreshing after printing a character.
 -------------------------------------------------------------------------------
 Issue 2:  Unclear how to handle a 2-byte instruction across ROM boundaries
 Priority: low
+Status:   open
 
 As marked in "cpu.cpp," it is unclear how to handle such instructions, but it is
 probably not terribly important.
 -------------------------------------------------------------------------------
 Issue 3:  Unclear why "flushinp" is needed for keyboard input
 Priority: medium
+Status:   fixed
 
 This is marked in "keyboard.h" and may be related to issue 1.
+
+Fixed. The fix for issue 1 removes the need for flushinp.
 ------------------------------------------------------------------------------
 

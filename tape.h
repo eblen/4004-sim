@@ -23,6 +23,7 @@ class Tape : public iodevice
        {
            char c = byte_to_char(nibbles_to_byte(buffer, val));
            printw("%c",c);
+           refresh();
        }
        else buffer = val;
        print_byte = !print_byte;

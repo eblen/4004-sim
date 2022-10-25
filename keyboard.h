@@ -46,14 +46,7 @@ class Keyboard : public iodevice, public testdevice
 
     void run()
     {
-        initscr();
-        while(true)
-        {
-            // TODO: Figure out why "flushinp" is needed.
-            // (Otherwise, there is a single character delay.)
-            flushinp();
-            read_char(getch());
-        }
+        while(true) read_char(getch());
     }
 
     private:
