@@ -10,6 +10,7 @@ class Tape : public iodevice
     Tape() :print_byte(false), buffer(0)
     {
         initscr();
+        cbreak();
         noecho();
     }
 
