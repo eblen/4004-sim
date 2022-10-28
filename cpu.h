@@ -27,7 +27,7 @@ class CPU4004
     Crumb  sel_ram_reg;
 
     // Functions for processing instructions
-    std::tuple<Byte,Byte> read_instr();
+    std::pair<Byte,Byte> read_instr();
     void exec_instr(Byte b1, Byte b2);
 };
 

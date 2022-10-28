@@ -1,4 +1,7 @@
+#include <bitset>
+#include <sstream>
 #include "cpu.h"
+#include "logger.h"
 
 bool is_two_byte_instr(Byte b)
 {
@@ -25,13 +28,25 @@ void CPU4004::run()
     while(true)
     {
         auto [b1,b2] = read_instr();
+        int this_ip = ip;
         ip++;
         if (is_two_byte_instr(b1)) ip++;
         exec_instr(b1,b2);
+
+#ifdef DEBUG
+        // Avoid printing busy waits by checking if ip repeats
+        if (ip != this_ip)
+        {
+          std::ostringstream oss;
+          oss << "ip " << this_ip << " " << std::bitset<8>(b1) << " " << std::bitset<8>(b2);
+          send_to_log(oss.str());
+        }
+#endif
+
     }
 }
 
-std::tuple<Byte,Byte> CPU4004::read_instr()
+std::pair<Byte,Byte> CPU4004::read_instr()
 {
     Nibble rom_num  = get_high_nibble_from_addr(ip);
     Byte   rom_addr = get_low_byte(ip);
