@@ -1,0 +1,89 @@
+; Read seed (4 digits)
+; Three similar instructions for each digit
+1101 0001           ; Write character set to tape
+1110 0001
+0001 0001 0000 0010 ; Wait for keyboard
+1110 1010           ; Read from keyboard
+1110 0001           ; Write to tape
+1011 0000           ; Write first digit to R0
+1101 0001           ; Write character set to tape
+1110 0001
+0001 0001 0000 1001 ; Wait for keyboard
+1110 1010           ; Read from keyboard
+1110 0001           ; Write to tape
+1011 0001           ; Write second digit to R1
+1101 0001           ; Write character set to tape
+1110 0001
+0001 0001 0001 0000 ; Wait for keyboard
+1110 1010           ; Read from keyboard
+1110 0001           ; Write to tape
+1011 0010           ; Write third digit to R2
+1101 0001           ; Write character set to tape
+1110 0001
+0001 0001 0001 0111 ; Wait for keyboard
+1110 1010           ; Read from keyboard
+1110 0001           ; Write to tape
+1011 0011           ; Write fourth digit to R3
+
+; Compute guess from seed
+; Goal is to make it highly difficult to guess "guess"
+; from seed itself.
+; First, combine all digits in A in some convoluted way.
+1001 0000
+1000 0001
+1000 0010
+1000 0010
+1000 0011
+
+; Now, apply A to each digit in a convoluted way
+1000 0000 ; Add A to digit 1
+1011 0000
+1010 0000
+1111 0101 ; Rotate A and add to digit 2
+1000 0001
+1011 0001
+1010 0001
+1111 0010 ; increment and rotate A twice and add to digit 3
+1111 0101
+1111 0101
+1000 0010
+1011 0010
+1010 0010
+1000 0010 ; Double A, rotate right, and add to digit 4
+1111 0110
+1000 0011
+1011 0011
+
+; For now, just print guess to tape
+
+; Print newline
+1101 0000
+1110 0001
+1101 0001
+1110 0001
+
+; Print first digit
+1101 0001
+1110 0001
+1010 0000
+1110 0001
+
+; Print second digit
+1101 0001
+1110 0001
+1010 0001
+1110 0001
+
+; Print third digit
+1101 0001
+1110 0001
+1010 0010
+1110 0001
+
+; Print fourth digit
+1101 0001
+1110 0001
+1010 0011
+1110 0001
+
+0100 0000 0100 0110 ; Halt

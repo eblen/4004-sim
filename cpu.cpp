@@ -90,21 +90,25 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // FIM
     else if (b1 < 0b00110000 && is_even(b1))
     {
+        assert(false);
     }
 
     // SRC
     else if (b1 < 0b00110000 && is_odd(b1))
     {
+        assert(false);
     }
 
     // FIN
     else if (b1 < 0b01000000 && is_even(b1))
     {
+        assert(false);
     }
 
     // JIN
     else if (b1 < 0b01000000 && is_odd(b1))
     {
+        assert(false);
     }
 
     // JUN
@@ -116,41 +120,59 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // JMS
     else if (b1 < 0b01100000)
     {
+        assert(false);
     }
 
     // INC
     else if (b1 < 0b01110000)
     {
+        acc = INC(acc);
     }
 
     // ADD CY
     else if (b1 < 0b10010000)
     {
+        Bit carry_out = 0;
+        Nibble reg_num = get_low_nibble(b1);
+        acc = ADD(acc, reg[reg_num], carry, carry_out);
+        carry = carry_out;
     }
 
     // SUB CY
     else if (b1 < 0b10100000)
     {
+        Bit borrow = 0;
+        Nibble reg_num = get_low_nibble(b1);
+        acc = SUB(acc, reg[reg_num], carry, borrow);
+        carry = borrow;
     }
 
     // LD
     else if (b1 < 0b10110000)
     {
+        Nibble reg_num = get_low_nibble(b1);
+        acc = reg[reg_num];
     }
 
     // XCH
     else if (b1 < 0b11000000)
     {
+        Nibble reg_num = get_low_nibble(b1);
+        Nibble tmp = acc;
+        acc = reg[reg_num];
+        reg[reg_num] = tmp;
     }
 
     // BBL
     else if (b1 < 0b11010000)
     {
+        assert(false);
     }
 
     // LDM
     else if (b1 < 0b11100000)
     {
+        acc = get_low_nibble(b1);
     }
 
     // All instructions >= 0b11100000)
@@ -161,6 +183,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     {
         // WRM
         case 0b11100000:
+            assert(false);
             break;
         // WMP
         case 0b11100001:
@@ -168,27 +191,35 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // WRR
         case 0b11100010:
+            assert(false);
             break;
         // WPM
         case 0b11100011:
+            assert(false);
             break;
         // WR0
         case 0b11100100:
+            assert(false);
             break;
         // WR1
         case 0b11100101:
+            assert(false);
             break;
         // WR2
         case 0b11100110:
+            assert(false);
             break;
         // WR3
         case 0b11100111:
+            assert(false);
             break;
         // SBM
         case 0b11101000:
+            assert(false);
             break;
         // RDM
         case 0b11101001:
+            assert(false);
             break;
         // RDR
         case 0b11101010:
@@ -196,60 +227,87 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // ADM
         case 0b11101011:
+            assert(false);
             break;
         // RD0
         case 0b11101100:
+            assert(false);
             break;
         // RD1
         case 0b11101101:
+            assert(false);
             break;
         // RD2
         case 0b11101110:
+            assert(false);
             break;
         // RD3
         case 0b11101111:
+            assert(false);
             break;
         // CLB
         case 0b11110000:
+            assert(false);
             break;
         // CLC
         case 0b11110001:
+            assert(false);
             break;
         // IAC
         case 0b11110010:
+            acc = INC(acc);
             break;
         // CMC
         case 0b11110011:
+            assert(false);
             break;
         // CMA
         case 0b11110100:
+            assert(false);
             break;
         // RAL
         case 0b11110101:
+        {
+            Bit carry_out = 0;
+            acc = RAL(acc, carry, carry_out);
+            carry = carry_out;
             break;
+        }
         // RAR
         case 0b11110110:
+        {
+            Bit carry_out = 0;
+            acc = RAR(acc, carry, carry_out);
+            carry = carry_out;
             break;
+        }
         // TCC
         case 0b11110111:
+            assert(false);
             break;
         // DAC
         case 0b11111000:
+            assert(false);
             break;
         // TCS
         case 0b11111001:
+            assert(false);
             break;
         // STC
         case 0b11111010:
+            assert(false);
             break;
         // DAA
         case 0b11111011:
+            assert(false);
             break;
         // KBP
         case 0b11111100:
+            assert(false);
             break;
         // DCL
         case 0b11111101:
+            assert(false);
             break;
         // WRM
         default:
