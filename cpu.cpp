@@ -126,7 +126,8 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // INC
     else if (b1 < 0b01110000)
     {
-        acc = INC(acc);
+        Nibble reg_num = get_low_nibble(b1);
+        reg[reg_num] = INC(reg[reg_num]);
     }
 
     // ADD CY
@@ -247,11 +248,12 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // CLB
         case 0b11110000:
-            assert(false);
+            acc   = 0;
+            carry = 0;
             break;
         // CLC
         case 0b11110001:
-            assert(false);
+            carry = 0;
             break;
         // IAC
         case 0b11110010:
@@ -295,7 +297,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // STC
         case 0b11111010:
-            assert(false);
+            carry = 1;
             break;
         // DAA
         case 0b11111011:
