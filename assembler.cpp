@@ -10,17 +10,51 @@ int main(int argc, char** argv)
 {
     const std::map<char,int> symbol_to_num_base{ {'%', 2}, {'#', 10}, {'$', 16} };
     std::map<std::string, unsigned int> label_to_address;
-    int line_num = 1;
-    int byte_num = 0;
+    std::vector<std::string> lines_of_assembly;
 
+    // First pass is simply for storing labels
+    int line_num = 0;
+    int byte_num = 0;
     for (std::string line; std::getline(std::cin, line);)
     {
+        line_num++;
+        lines_of_assembly.push_back(line);
+
         // Skip commented or empty lines
-        if ((line[0] == ';') || (line.size() == 0))
+        if ((line[0] == ';') || (line.size() == 0)) continue;
+
+        std::string op;
+        std::istringstream iss(line);
+        // op is all we need for the first pass
+        iss >> op;
+
+        if (op[0] == ':')
         {
-            line_num++;
-            continue;
+            op.erase(op.begin());
+            label_to_address[op] = byte_num;
         }
+
+        else
+        {
+            int isize = instr_size(op);
+            if (isize == 0)
+            {
+                std::cerr << "Error on line " << line_num << ": unrecognized instruction" << std::endl;
+                exit(0);
+            }
+            byte_num += isize;
+        }
+    }
+
+    // Second pass does the bulk of the work
+    line_num = 0;
+    byte_num = 0;
+    for (std::string line : lines_of_assembly)
+    {
+        line_num++;
+
+        // Skip commented or empty lines
+        if ((line[0] == ';') || (line.size() == 0)) continue;
 
         // Remove commented portions
         size_t comm_start = line.find_first_of(';');
@@ -38,7 +72,6 @@ int main(int argc, char** argv)
         {
             op.erase(op.begin());
             label_to_address[op] = byte_num;
-            line_num++;
             continue;
         }
 
@@ -118,7 +151,6 @@ int main(int argc, char** argv)
             exit(0);
         }
 
-        line_num++;
         int isize = instr_size(op);
         // Should never happen, because we already checked that op was valid.
         if (isize == 0) assert(false);
