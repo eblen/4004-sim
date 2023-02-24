@@ -1,4 +1,5 @@
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,10 @@ const std::map<std::string, std::string> opcode_to_binary{
 
     {"CLB", "11110000"}, {"CLC", "11110001"}, {"IAC", "11110010"}, {"CMC", "11110011"}, {"CMA", "11110100"}, 
     {"RAL", "11110101"}, {"RAR", "11110110"}, {"TCC", "11110111"}, {"DAC", "11111000"}, {"TCS", "11111001"}, 
-    {"STC", "11111010"}, {"DAA", "11111011"}, {"KBP", "11111100"}, {"DCL", "11111101"}
+    {"STC", "11111010"}, {"DAA", "11111011"}, {"KBP", "11111100"}, {"DCL", "11111101"},
+
+    // Non-existent instructions used only by assembler
+    {"BYTE", "11111111"},
 };
 
 // Get binary string representation (ebin) for the last "num_bits" of "num"
@@ -31,12 +35,16 @@ std::string uint_to_ebin(unsigned int num, int num_bits)
     return ret_val;
 }
 
-// Return the instruction size (either 1 or 2 bytes) for the given mnemonic
-// If not found, return 0
-unsigned int instr_size(const std::string &orig_op)
+// Return the instruction size (either 1 or 2 bytes except for BYTE
+// instruction) for the given mnemonic. If not found, return 0.
+unsigned int instr_size(const std::string &instr)
 {
+    std::string op;
+    std::istringstream iss(instr);
+    // op is all we need for nearly all instructions
+    iss >> op;
+
     // Convert op to uppercase
-    std::string op(orig_op);
     transform(op.begin(), op.end(), op.begin(), toupper);
 
     try
@@ -52,18 +60,31 @@ unsigned int instr_size(const std::string &orig_op)
     {
         return 2;
     }
-    else {return 1;}
+    else if (op != "BYTE")
+    {
+        return 1;
+    }
+
+    // BYTE is the only instruction that requires the arguments to compute
+    // the instruction size.
+    else
+    {
+        unsigned int num_args = 0;
+        std::string arg;
+        while (iss >> arg) num_args++;
+        return num_args;
+    }
 }
 
 // Convert a single assembly instruction to ebin
 std::pair<std::string, PARSE_ERROR> assembly_to_ebin(const std::string &orig_op, const std::vector<unsigned int> &orig_args)
 {
-    // No instruction takes more than two arguments
-    if (orig_args.size() > 2) return std::pair("", TOO_MANY_ARGS);
-
     // Convert op to uppercase
     std::string op(orig_op);
     transform(op.begin(), op.end(), op.begin(), toupper);
+
+    // No instruction except BYTE takes more than two arguments
+    if ((op != "BYTE") && (orig_args.size() > 2)) return std::pair("", TOO_MANY_ARGS);
 
     // Copy arguments so they can be modified
     std::vector<unsigned int> args(orig_args);
@@ -87,6 +108,18 @@ std::pair<std::string, PARSE_ERROR> assembly_to_ebin(const std::string &orig_op,
         if (args.empty()) return std::pair("", TOO_FEW_ARGS);
         args[0] <<= 1;
         if ((op == "SRC") || (op == "JIN")) args[0] += 1;
+    }
+
+    if (op == "BYTE")
+    {
+        if (args.empty()) return std::pair("", TOO_FEW_ARGS);
+
+        std::string ret_val = uint_to_ebin(args[0], 8);
+        for (size_t i=1; i < args.size(); i++)
+        {
+           ret_val += " " + uint_to_ebin(args[i], 8);
+        }
+        return std::pair(ret_val, NONE);
     }
 
     // For NOP or all instructions >= 11100000, no more is needed.

@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 
         else
         {
-            int isize = instr_size(op);
+            int isize = instr_size(line);
             if (isize == 0)
             {
                 std::cerr << "Error on line " << line_num << ": unrecognized instruction" << std::endl;
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
             exit(0);
         }
 
-        int isize = instr_size(op);
+        int isize = instr_size(line);
         // Should never happen, because we already checked that op was valid.
         if (isize == 0) assert(false);
         byte_num += isize;
