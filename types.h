@@ -75,7 +75,7 @@ static Nibble INC(Nibble n)
     return get_low_nibble(n+1);
 }
 
-static Byte nibbles_to_byte(Nibble n1, Nibble n2, bool &borrow)
+static Byte nibbles_to_byte(Nibble n1, Nibble n2)
 {
     return ((n1 << 4) | (n2 & 0b00001111));
 }
