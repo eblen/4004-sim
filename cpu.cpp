@@ -94,15 +94,22 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     }
 
     // SRC
+    // Currently only works for selecting ROM chip
     else if (b1 < 0b00110000 && is_odd(b1))
     {
-        assert(false);
+        Nibble src_reg = (get_low_nibble(b1) >> 1) * 2;
+        sel_rom = reg[src_reg];
     }
 
     // FIN
     else if (b1 < 0b01000000 && is_even(b1))
     {
-        assert(false);
+        Byte rom_addr = nibbles_to_byte(reg[0], reg[1]);
+        Byte rom_val  = roms->at(sel_rom).read(rom_addr);
+
+        Nibble dest_reg = (get_low_nibble(b1) >> 1) * 2;
+        reg[dest_reg]   = get_high_nibble_from_byte(rom_val);
+        reg[dest_reg+1] = get_low_nibble(rom_val);
     }
 
     // JIN

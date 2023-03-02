@@ -3,6 +3,20 @@
 #include "rom.h"
 #include "types.h"
 
+void ROM4001::load(const std::vector<Byte>& bytes)
+{
+    if (bytes.size() > 256)
+    {
+        throw std::runtime_error("Code exceeds ROM capacity of 256 bytes");
+    }
+
+    std::array<Byte,256> rom_mirror;
+    rom_mirror.fill(0);
+    std::copy(bytes.begin(), bytes.end(), rom_mirror.begin());
+
+    load(rom_mirror);
+}
+
 void load_rom_rack(std::shared_ptr<rom_rack> rr, const std::vector<Byte>& bytes)
 {
     if (bytes.size() > rr->size() * 256)

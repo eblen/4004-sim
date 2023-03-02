@@ -1,4 +1,4 @@
-; Read seed (4 digits)
+; Read solution index (2 hex digits)
 ; Six similar instructions for each digit
 
 ; READ FIRST DIGIT
@@ -28,70 +28,38 @@ RDR ; Read from keyboard
 WMP ; Write to tape
 XCH #1 ; Write second digit to R1
 
-
-; READ THIRD DIGIT
-; Write character set to tape
-LDM #1
-WMP
-
-; Wait for keyboard
-:kb_wait3
-JCN %0001 :kb_wait3
-
-RDR ; Read from keyboard
-WMP ; Write to tape
-XCH #2 ; Write third digit to R2
-
-
-; READ FOURTH DIGIT
-; Write character set to tape
-LDM #1
-WMP
-
-; Wait for keyboard
-:kb_wait4
-JCN %0001 :kb_wait4
-
-RDR ; Read from keyboard
-WMP ; Write to tape
-XCH #3 ; Write fourth digit to R3
-
-
-; Compute guess from seed
-; Goal is to make it highly difficult to guess "guess"
-; from seed itself.
-; First, combine all digits in A in some convoluted way.
-SUB #0
-ADD #1
-ADD #2
-ADD #2
-ADD #3
-
-; Now, apply A to each digit in a convoluted way
-; Add A to digit 1
-ADD #0
-XCH #0
-LD  #0
-
-; Rotate A and add to digit 2
+; Double value in register pair R0/R1 to create a byte address
+CLC
+LD #1
 RAL
-ADD #1
 XCH #1
-LD  #1
-
-; increment and rotate A twice and add to digit 3
-IAC
+LD #0
 RAL
-RAL
-ADD #2
-XCH #2
-LD  #2
+XCH #0
 
-; Double A, rotate right, and add to digit 4
-ADD #2
-RAR
-ADD #3
-XCH #3
+; Now fetch solution from ROM
+
+; Set to second ROM chip
+; (Using index register pair 3)
+LDM #1
+XCH #6
+SRC #3
+
+; Fetch
+FIN #2
+INC #1
+FIN #1
+
+; Set back to first ROM chip
+LDM #0
+XCH #6
+SRC #3
+
+; Place high digits into R0 and R1 (previously needed for FIN)
+XCH #4
+XCH #0
+XCH #5
+XCH #1
 
 ; Print newline
 LDM #0

@@ -12,6 +12,7 @@ class ROM4001 : public iodevice
 {
     public:
     void load(const std::array<Byte,256>& d) {data = d;}
+    void load(const std::vector<Byte>& d);
     void set_iotype(IOTYPE t) {iotype = t;}
 
     Byte read(Byte b) {return data[b];}
