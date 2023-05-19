@@ -94,11 +94,13 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     }
 
     // SRC
-    // Currently only works for selecting ROM chip
     else if (b1 < 0b00110000 && is_odd(b1))
     {
         Nibble src_reg = (get_low_nibble(b1) >> 1) * 2;
-        sel_rom = reg[src_reg];
+        sel_rom     = reg[src_reg];
+        sel_ram     = reg[src_reg] >> 2;
+        sel_ram_reg = reg[src_reg] & 0b0011;
+        sel_ram_mmc = reg[src_reg+1];
     }
 
     // FIN
@@ -135,6 +137,16 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     {
         Nibble reg_num = get_low_nibble(b1);
         reg[reg_num] = INC(reg[reg_num]);
+    }
+
+    // ISZ
+    else if (b1 < 0b10000000)
+    {
+        Nibble reg_num = get_low_nibble(b1);
+        reg[reg_num] = INC(reg[reg_num]);
+
+        Nibble current_rom = get_high_nibble_from_addr(ip);
+        if (reg[reg_num] != 0) ip = bytes_to_addr(current_rom,b2);
     }
 
     // ADD CY
@@ -191,7 +203,7 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     {
         // WRM
         case 0b11100000:
-            assert(false);
+            rams->at(sel_ram).write_mmc(sel_ram_reg, sel_ram_mmc, acc);
             break;
         // WMP
         case 0b11100001:
@@ -207,27 +219,32 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // WR0
         case 0b11100100:
-            assert(false);
+            rams->at(sel_ram).write_stat(sel_ram_reg, 0, acc);
             break;
         // WR1
         case 0b11100101:
-            assert(false);
+            rams->at(sel_ram).write_stat(sel_ram_reg, 1, acc);
             break;
         // WR2
         case 0b11100110:
-            assert(false);
+            rams->at(sel_ram).write_stat(sel_ram_reg, 2, acc);
             break;
         // WR3
         case 0b11100111:
-            assert(false);
+            rams->at(sel_ram).write_stat(sel_ram_reg, 3, acc);
             break;
         // SBM
         case 0b11101000:
-            assert(false);
+        {
+            Bit borrow = 0;
+            Nibble mmc = rams->at(sel_ram).read_mmc(sel_ram_reg, sel_ram_mmc);
+            acc = SUB(acc, mmc, carry, borrow);
+            carry = borrow;
             break;
+        }
         // RDM
         case 0b11101001:
-            assert(false);
+            acc = rams->at(sel_ram).read_mmc(sel_ram_reg, sel_ram_mmc);
             break;
         // RDR
         case 0b11101010:
@@ -239,19 +256,19 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // RD0
         case 0b11101100:
-            assert(false);
+            acc = rams->at(sel_ram).read_stat(sel_ram_reg, 0);
             break;
         // RD1
         case 0b11101101:
-            assert(false);
+            acc = rams->at(sel_ram).read_stat(sel_ram_reg, 1);
             break;
         // RD2
         case 0b11101110:
-            assert(false);
+            acc = rams->at(sel_ram).read_stat(sel_ram_reg, 2);
             break;
         // RD3
         case 0b11101111:
-            assert(false);
+            acc = rams->at(sel_ram).read_stat(sel_ram_reg, 3);
             break;
         // CLB
         case 0b11110000:

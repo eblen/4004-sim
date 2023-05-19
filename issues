@@ -22,4 +22,13 @@ This is marked in "keyboard.h" and may be related to issue 1.
 
 Fixed. The fix for issue 1 removes the need for flushinp.
 ------------------------------------------------------------------------------
+Issue 4: Definition of "local" ROM is technically incorrect
+Priority: low
+Status:   open
+
+For the ISZ instruction, we use the high nibble of IP as the current ROM.
+However, IP points to the next instruction, not ISZ itself. This will be
+incorrect if an ISZ instruction is the last instruction of a ROM. Such code
+would likely be brittle anyway, since any code insertions or deletions prior to
+ISZ could change the jump target!
 

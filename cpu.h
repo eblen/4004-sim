@@ -26,6 +26,7 @@ class CPU4004
     Nibble sel_rom;
     Crumb  sel_ram;
     Crumb  sel_ram_reg;
+    Nibble sel_ram_mmc; // selected main memory character
 
     // Functions for processing instructions
     std::pair<Byte,Byte> read_instr();

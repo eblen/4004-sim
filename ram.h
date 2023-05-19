@@ -10,10 +10,10 @@ class RAM4002 : public iodevice
     constexpr static int num_ports = 4;
 
     public:
-    Nibble read_mem  (Crumb reg, Nibble loc)             {return data[reg][loc];}
-    Nibble read_char (Crumb reg, Crumb  loc)             {return data[reg][loc+16];}
-    void   write_mem (Crumb reg, Nibble loc, Nibble val) {data[reg][loc]    = val;}
-    void   write_char(Crumb reg, Crumb  loc, Nibble val) {data[reg][loc+16] = val;}
+    Nibble read_mmc  (Crumb reg, Nibble loc)             {return data[reg][loc];}
+    Nibble read_stat (Crumb reg, Crumb  loc)             {return data[reg][loc+16];}
+    void   write_mmc (Crumb reg, Nibble loc, Nibble val) {data[reg][loc]    = val;}
+    void   write_stat(Crumb reg, Crumb  loc, Nibble val) {data[reg][loc+16] = val;}
 
     void connect(std::shared_ptr<iodevice> d) {device = d;}
 
