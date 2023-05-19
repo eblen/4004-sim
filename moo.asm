@@ -40,26 +40,46 @@ XCH #0
 ; Now fetch solution from ROM
 
 ; Set to second ROM chip
-; (Using index register pair 3)
+; (Using index register pair 1)
 LDM #1
-XCH #6
-SRC #3
+XCH #2
+SRC #1
 
-; Fetch
+; Fetch solution
+; (Using index register pairs 2 and 3)
 FIN #2
 INC #1
-FIN #1
+FIN #3
 
 ; Set back to first ROM chip
-LDM #0
-XCH #6
-SRC #3
+; Also set RAM to first chip, first register, and main
+; memory character 12
+CLB
+XCH #2
+LDM #12
+XCH #3
+SRC #1
 
-; Place high digits into R0 and R1 (previously needed for FIN)
+; Write solution to RAM
 XCH #4
-XCH #0
+WRM
+INC #3
+SRC #1
+
 XCH #5
-XCH #1
+WRM
+INC #3
+SRC #1
+
+XCH #6
+WRM
+INC #3
+SRC #1
+
+XCH #7
+WRM
+INC #3
+SRC #1
 
 ; Print newline
 LDM #0
@@ -67,47 +87,61 @@ WMP
 LDM #1
 WMP
 
-; ========= DEBUGGING - UNCOMMENT TO PRINT ANSWER TO TAPE ========
+; ========= DEBUGGING - COMMENT FIRST LINE TO PRINT ANSWER TO TAPE ========
+JUN :END_DEBUGGING
 
-; Print first digit
-; LDM #1
-; WMP
-; LD  #0
-; WMP
+; Initialize index register pair 0 to read solution
+; (intentionally different from pair used to set solution)
+CLB
+XCH #0
+LDM #12
+XCH #1
 
-; Print second digit
-; LDM #1
-; WMP
-; LD  #1
-; WMP
+:PRINT_SOLUTION_DIGIT
+SRC #0
 
-; Print third digit
-; LDM #1
-; WMP
-; LD  #2
-; WMP
+; Write character set to tape
+LDM #1
+WMP
 
-; Print fourth digit
-; LDM #1
-; WMP
-; LD  #3
-; WMP
+; output digit
+RDM
+WMP
+
+ISZ #1 :PRINT_SOLUTION_DIGIT
+; End loop to print solution digits
 
 ; Print newline
-; LDM #0
-; WMP
-; LDM #1
-; WMP
+LDM #0
+WMP
+LDM #1
+WMP
+
+; Uncomment to halt program after debugging output
+; :HALT_AFTER_DEBUG
+; JUN :HALT_AFTER_DEBUG
 
 ; ========= END DEBUGGING - UNCOMMENT TO PRINT ANSWER TO TAPE ========
+:END_DEBUGGING
 
 ; Main Loop
 :MAIN
 
-; Read player guess (4 digits)
-; Six similar instructions for each digit
+; Initialize register index pair 0 for RAM SRC command
+LDM #1
+XCH #0
+LDM #12
+XCH #1
 
-; READ FIRST DIGIT
+; Initialize register index pair 1 for keyboard SRC command
+; (keyboard connected to port on ROM 0)
+CLB
+XCH #2
+XCH #3
+
+; Loop to read digits from guess
+:READ_GUESS
+
 ; Write character set to tape
 LDM #1
 WMP
@@ -116,51 +150,16 @@ WMP
 :kb_wait1
 JCN %0001 :kb_wait1
 
-RDR ; Read from keyboard
+; Read digit
+SRC #1
+RDR ; Read from keyboard (port on ROM 0)
 WMP ; Write to tape
-XCH #4 ; Write first digit to R4
+SRC #0
+WRM ; Write digit to RAM main memory character
 
-
-; READ SECOND DIGIT
-; Write character set to tape
-LDM #1
-WMP
-
-; Wait for keyboard
-:kb_wait2
-JCN %0001 :kb_wait2
-
-RDR ; Read from keyboard
-WMP ; Write to tape
-XCH #5 ; Write second digit to R5
-
-
-; READ THIRD DIGIT
-; Write character set to tape
-LDM #1
-WMP
-
-; Wait for keyboard
-:kb_wait3
-JCN %0001 :kb_wait3
-
-RDR ; Read from keyboard
-WMP ; Write to tape
-XCH #6 ; Write third digit to R6
-
-
-; READ FOURTH DIGIT
-; Write character set to tape
-LDM #1
-WMP
-
-; Wait for keyboard
-:kb_wait4
-JCN %0001 :kb_wait4
-
-RDR ; Read from keyboard
-WMP ; Write to tape
-XCH #7 ; Write fourth digit to R7
+; Keep looping until R1 is 0 (mod 16)
+ISZ #1 :READ_GUESS
+; End loop to read digits from guess
 
 ; Print newline
 LDM #0
@@ -168,146 +167,120 @@ WMP
 LDM #1
 WMP
 
-; Clear previous counts
+; Prepare for analysis
+; At this point RAM register zero contains the solution and
+; RAM register 1 contains the guess. Digits are stored in
+; main memory characters 12-15. In the guess register,
+; status characters 0, 1, and 2 are used for bull, cow, and
+; sheep counts, respectively.
+
+; Register map
+; R0,R1: Index pair for SRCing guess digits
+; R2,R3: Index pair for SRCing solution digits
+; R4:    Copy of guess digit being analyzed in inner loop
+; R5:    Count of matches for guess digit
+
+; Clear bull, cow, and sheep counts
+; (RAM register 1 already selected)
 CLB
-XCH #8
+WR0
+WR1
+WR2
+
+; Reset register index pairs
+; (R0 already 0)
 CLB
-XCH #9
+XCH #2
+LDM #12
+XCH #1
+LDM #12
+XCH #3
+
+; Main loop to analyze guess (compute bulls, cows, and sheep)
+:ANALYZE_GUESS
+
+; Outer loop iterates through guess digits
+
+; Copy guess digit to R4
+SRC #0
+RDM
+XCH #4
+
+; Reset solution digit index in R3 and match count in R5
+LDM #12
+XCH #3
 CLB
-XCH #10
+XCH #5
 
-; Compute new counts of bulls, cows, and sheep
-LD  #0
+; Inner loop iterates through solution digits
+:BEGIN_ANALYSIS_INNER_LOOP
+
+SRC #1 ; Set the solution digit to compare
+LD  #4 ; Load guess digit to acc
+
+; Compare digits
 CLC
-SUB #4
-JCN %1100 :NO_BULL
-INC #8
-JUN :SECOND_DIGIT
+SBM
 
-:NO_BULL
-LD  #1
+; No match. Skip to next iteration
+JCN %1100 :CONTINUE_INNER_LOOP
+
+; Match found
+INC #5
+
+; Is it a bull?
+LD #1
 CLC
-SUB #4
-JCN %0100 :COW_FOUND
+SUB #3
+JCN %1100 :CONTINUE_INNER_LOOP
 
-LD  #2
-CLC
-SUB #4
-JCN %0100 :COW_FOUND
+; Bull found. Increment bull count and exit inner loop
+SRC #0
+RD0
+IAC
+WR0
+JUN :CONTINUE_OUTER_LOOP
 
-LD  #3
-CLC
-SUB #4
-JCN %0100 :COW_FOUND
-INC #10
-JUN :SECOND_DIGIT
+; Keep looping until R3 is 0 (mod 16)
+:CONTINUE_INNER_LOOP
+ISZ #3 :BEGIN_ANALYSIS_INNER_LOOP
+; End inner loop
 
-:COW_FOUND
-INC #9
+; Post-processing of inner loop. Digit is either a cow or
+; sheep depending on if R5 > 0
+SRC #0
+LD #5
+JCN %0100 :IS_A_SHEEP
+RD1
+IAC
+WR1
+JUN :CONTINUE_OUTER_LOOP
 
-:SECOND_DIGIT
-LD  #1
-CLC
-SUB #5
-JCN %1100 :NO_BULL_2
-INC #8
-JUN :THIRD_DIGIT
+:IS_A_SHEEP
+RD2
+IAC
+WR2
 
-:NO_BULL_2
-LD  #0
-CLC
-SUB #5
-JCN %0100 :COW_FOUND_2
+; Keep looping until R1 is 0 (mod 16)
+:CONTINUE_OUTER_LOOP
+ISZ #1 :ANALYZE_GUESS
+; End outer loop
 
-LD  #2
-CLC
-SUB #5
-JCN %0100 :COW_FOUND_2
-
-LD  #3
-CLC
-SUB #5
-JCN %0100 :COW_FOUND_2
-INC #10
-JUN :THIRD_DIGIT
-
-:COW_FOUND_2
-INC #9
-
-:THIRD_DIGIT
-LD  #2
-CLC
-SUB #6
-JCN %1100 :NO_BULL_3
-INC #8
-JUN :FOURTH_DIGIT
-
-:NO_BULL_3
-LD  #0
-CLC
-SUB #6
-JCN %0100 :COW_FOUND_3
-
-LD  #1
-CLC
-SUB #6
-JCN %0100 :COW_FOUND_3
-
-LD  #3
-CLC
-SUB #6
-JCN %0100 :COW_FOUND_3
-INC #10
-JUN :FOURTH_DIGIT
-
-:COW_FOUND_3
-INC #9
-
-:FOURTH_DIGIT
-LD  #3
-CLC
-SUB #7
-JCN %1100 :NO_BULL_4
-INC #8
-JUN :PRINT_BCS_RESULTS
-
-:NO_BULL_4
-LD  #0
-CLC
-SUB #7
-JCN %0100 :COW_FOUND_4
-
-LD  #1
-CLC
-SUB #7
-JCN %0100 :COW_FOUND_4
-
-LD  #2
-CLC
-SUB #7
-JCN %0100 :COW_FOUND_4
-INC #10
-JUN :PRINT_BCS_RESULTS
-
-:COW_FOUND_4
-INC #9
-
-
-; Print the results before returning to top of main loop
+; Print the results before restarting main loop
 :PRINT_BCS_RESULTS
 LDM #1
 WMP
-LD  #8
+RD0
 WMP
 
 LDM #1
 WMP
-LD  #9
+RD1
 WMP
 
 LDM #1
 WMP
-LD  #10
+RD2
 WMP
 
 ; Print newline
