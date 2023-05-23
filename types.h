@@ -125,6 +125,11 @@ static char byte_to_char(Byte b)
     return static_cast<char>(b);
 }
 
+static Byte char_to_byte(char c)
+{
+    return static_cast<Byte>(c);
+}
+
 // Convert Nibble's numeric value to its character (not just a cast).
 // So return a character [0-9] or [a-f].
 static char nibble_numeric_value_to_char(Nibble n)
@@ -135,6 +140,24 @@ static char nibble_numeric_value_to_char(Nibble n)
     else n += 87;
 
     return byte_to_char(n);
+}
+
+// Reverse of prior function. Convert character to numeric value.
+// Returns value and whether character is a valid hex digit.
+static std::pair<Nibble,bool> char_to_nibble_numeric_value(char c)
+{
+    Byte b = char_to_byte(c);
+
+    // 0-9
+    if (b >= 48 && b <= 57)  return {b-48, true};
+
+    // A-F
+    if (b >= 65 && b <= 70)  return {b-55, true};
+
+    // a-f
+    if (b >= 97 && b <= 102) return {b-87, true};
+
+    return {0,false};
 }
 
 // T should be one of the type aliases defined above

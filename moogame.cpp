@@ -19,7 +19,7 @@ struct MooGame
         rams  = std::make_shared<ram_rack>(1);
         cpu   = std::make_shared<CPU4004>();
         hpad  = std::make_shared<Hexpad>();
-        htape = std::make_shared<HexTape>();
+        htape = std::make_shared<Hextape>();
 
         // Connect all the parts together.
         roms->at(0).set_iotype(IOTYPE::in);
@@ -34,7 +34,7 @@ struct MooGame
     std::shared_ptr<ram_rack> rams;
     std::shared_ptr<CPU4004>  cpu;
     std::shared_ptr<Hexpad>   hpad;
-    std::shared_ptr<HexTape>  htape;
+    std::shared_ptr<Hextape>  htape;
 
     void run();
 };
