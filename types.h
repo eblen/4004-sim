@@ -31,11 +31,17 @@ static Nibble ADD(Nibble n1, Nibble n2, Bit carry, Bit &carry_out)
     return get_low_nibble(rval);
 }
 
+static Nibble COMPLEMENT(Nibble n)
+{
+    assert(n < 16);
+    return n ^ 0b00001111;
+}
+
 static Nibble SUB(Nibble n1, Nibble n2, Bit carry, Bit &borrow)
 {
     assert((n1 < 16) && (n2 < 16) && (carry < 2) && (borrow < 2));
 
-    Nibble rval = n1 + (n2 ^ 0b00001111);
+    Nibble rval = n1 + COMPLEMENT(n2);
     if (carry == 0) rval++;
 
     if (rval > 15) borrow = 0;
@@ -73,6 +79,13 @@ static Nibble INC(Nibble n)
     assert(n < 16);
 
     return get_low_nibble(n+1);
+}
+
+static Nibble DEC(Nibble n)
+{
+    assert(n < 16);
+
+    return (n == 0) ? 15 : (n-1);
 }
 
 static Byte nibbles_to_byte(Nibble n1, Nibble n2)

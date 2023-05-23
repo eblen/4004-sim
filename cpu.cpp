@@ -90,7 +90,11 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // FIM
     else if (b1 < 0b00110000 && is_even(b1))
     {
-        assert(false);
+        Byte rom_val = roms->at(sel_rom).read(b2);
+
+        Nibble dest_reg = (get_low_nibble(b1) >> 1) * 2;
+        reg[dest_reg]   = get_high_nibble_from_byte(rom_val);
+        reg[dest_reg+1] = get_low_nibble(rom_val);
     }
 
     // SRC
@@ -117,7 +121,11 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // JIN
     else if (b1 < 0b01000000 && is_odd(b1))
     {
-        assert(false);
+        Nibble dest_reg = (get_low_nibble(b1) >> 1) * 2;
+        Byte local_rom_addr = nibbles_to_byte(reg[dest_reg], reg[dest_reg+1]);
+
+        Nibble current_rom = get_high_nibble_from_addr(ip);
+        ip = bytes_to_addr(current_rom, local_rom_addr);
     }
 
     // JUN
@@ -211,10 +219,11 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // WRR
         case 0b11100010:
-            assert(false);
+            roms->at(sel_rom).port_output(acc);
             break;
         // WPM
         case 0b11100011:
+            // Only used on 4008/4009
             assert(false);
             break;
         // WR0
@@ -252,8 +261,13 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // ADM
         case 0b11101011:
-            assert(false);
+        {
+            Bit carry_out = 0;
+            Nibble mmc = rams->at(sel_ram).read_mmc(sel_ram_reg, sel_ram_mmc);
+            acc = ADD(acc, mmc, carry, carry_out);
+            carry = carry_out;
             break;
+        }
         // RD0
         case 0b11101100:
             acc = rams->at(sel_ram).read_stat(sel_ram_reg, 0);
@@ -285,11 +299,11 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // CMC
         case 0b11110011:
-            assert(false);
+            carry = (carry == 0) ? 1 : 0;
             break;
         // CMA
         case 0b11110100:
-            assert(false);
+            acc = COMPLEMENT(acc);
             break;
         // RAL
         case 0b11110101:
@@ -309,11 +323,12 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
         }
         // TCC
         case 0b11110111:
-            assert(false);
+            acc = carry;
+            carry = 0;
             break;
         // DAC
         case 0b11111000:
-            assert(false);
+            acc = DEC(acc);
             break;
         // TCS
         case 0b11111001:
