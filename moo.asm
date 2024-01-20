@@ -6,9 +6,7 @@
 LDM #1
 WMP
 
-; Wait for keyboard
-:kb_wait1
-JCN %0001 :kb_wait1
+JMS :WAIT_FOR_KEYBOARD
 
 RDR ; Read from keyboard
 WMP ; Write to tape
@@ -20,9 +18,7 @@ XCH #0 ; Write first digit to R0
 LDM #1
 WMP
 
-; Wait for keyboard
-:kb_wait2
-JCN %0001 :kb_wait2
+JMS :WAIT_FOR_KEYBOARD
 
 RDR ; Read from keyboard
 WMP ; Write to tape
@@ -146,9 +142,7 @@ XCH #3
 LDM #1
 WMP
 
-; Wait for keyboard
-:kb_wait1
-JCN %0001 :kb_wait1
+JMS :WAIT_FOR_KEYBOARD
 
 ; Read digit
 SRC #1
@@ -290,3 +284,9 @@ LDM #1
 WMP
 
 JUN :MAIN
+
+; Subroutine to wait for keyboard
+:WAIT_FOR_KEYBOARD
+JCN %0001 :WAIT_FOR_KEYBOARD
+BBL #0
+

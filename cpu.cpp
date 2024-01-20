@@ -28,14 +28,14 @@ void CPU4004::run()
     while(true)
     {
         auto [b1,b2] = read_instr();
-        int this_ip = ip;
-        ip++;
-        if (is_two_byte_instr(b1)) ip++;
+        int this_ip = ip[current_ip];
+        ip[current_ip]++;
+        if (is_two_byte_instr(b1)) ip[current_ip]++;
         exec_instr(b1,b2);
 
 #ifdef DEBUG
         // Avoid printing busy waits by checking if ip repeats
-        if (ip != this_ip)
+        if (ip[current_ip] != this_ip)
         {
           std::ostringstream oss;
           oss << "ip " << this_ip << " " << std::bitset<8>(b1) << " " << std::bitset<8>(b2);
@@ -48,8 +48,8 @@ void CPU4004::run()
 
 std::pair<Byte,Byte> CPU4004::read_instr()
 {
-    Nibble rom_num  = get_high_nibble_from_addr(ip);
-    Byte   rom_addr = get_low_byte(ip);
+    Nibble rom_num  = get_high_nibble_from_addr(ip[current_ip]);
+    Byte   rom_addr = get_low_byte(ip[current_ip]);
     // TODO: Figure out how to properly handle a 2-byte instruction at the end
     // of a ROM. (It's probably not supported, so not too important.)
     return {roms->at(rom_num).read(rom_addr),
@@ -71,17 +71,17 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
         switch (low_nibble)
         {
             case 0b0001:
-                if (!tdev->test()) ip = b2; break;
+                if (!tdev->test()) ip[current_ip] = b2; break;
             case 0b0010:
-                if (carry)  ip = b2; break;
+                if (carry)  ip[current_ip] = b2; break;
             case 0b0100:
-                if (!acc)   ip = b2; break;
+                if (!acc)   ip[current_ip] = b2; break;
             case 0b1001:
-                if (tdev->test()) ip = b2; break;
+                if (tdev->test()) ip[current_ip] = b2; break;
             case 0b1010:
-                if (!carry) ip = b2; break;
+                if (!carry) ip[current_ip] = b2; break;
             case 0b1100:
-                if (acc)    ip = b2; break;
+                if (acc)    ip[current_ip] = b2; break;
             default:
                 throw InvalidInstr();
         }
@@ -124,20 +124,25 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
         Nibble dest_reg = (get_low_nibble(b1) >> 1) * 2;
         Byte local_rom_addr = nibbles_to_byte(reg[dest_reg], reg[dest_reg+1]);
 
-        Nibble current_rom = get_high_nibble_from_addr(ip);
-        ip = bytes_to_addr(current_rom, local_rom_addr);
+        Nibble current_rom = get_high_nibble_from_addr(ip[current_ip]);
+        ip[current_ip] = bytes_to_addr(current_rom, local_rom_addr);
     }
 
     // JUN
     else if (b1 < 0b01010000)
     {
-        ip = bytes_to_addr(b1,b2);
+        ip[current_ip] = bytes_to_addr(b1,b2);
     }
 
     // JMS
     else if (b1 < 0b01100000)
     {
-        assert(false);
+        // This is actually allowed according to the MCS manual but leads to
+        // the deepest return address being overwritten! (current_ip is mod 4).
+        assert(current_ip < 3);
+
+        current_ip++;
+        ip[current_ip] = bytes_to_addr(b1,b2);
     }
 
     // INC
@@ -153,8 +158,8 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
         Nibble reg_num = get_low_nibble(b1);
         reg[reg_num] = INC(reg[reg_num]);
 
-        Nibble current_rom = get_high_nibble_from_addr(ip);
-        if (reg[reg_num] != 0) ip = bytes_to_addr(current_rom,b2);
+        Nibble current_rom = get_high_nibble_from_addr(ip[current_ip]);
+        if (reg[reg_num] != 0) ip[current_ip] = bytes_to_addr(current_rom,b2);
     }
 
     // ADD CY
@@ -194,7 +199,12 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
     // BBL
     else if (b1 < 0b11010000)
     {
-        assert(false);
+        // This is allowed according to the MCS manual (see JMS comments) but
+        // is either a mistake or means return addresses have been overwritten.
+        assert(current_ip > 0);
+
+        current_ip--;
+        acc = get_low_nibble(b1);
     }
 
     // LDM

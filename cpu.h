@@ -6,7 +6,7 @@
 class CPU4004
 {
     public:
-    CPU4004() :carry(0), acc(0), ip(0), sel_rom(0), sel_ram(0), sel_ram_reg(0) {}
+    CPU4004() :carry(0), acc(0), current_ip(0), sel_rom(0), sel_ram(0), sel_ram_reg(0) {}
     void run();
     void connect(std::shared_ptr<rom_rack>   r) {roms = r;}
     void connect(std::shared_ptr<ram_rack>   r) {rams = r;}
@@ -17,7 +17,8 @@ class CPU4004
     Bit carry;
     Nibble acc;
     std::array<Nibble,16> reg;
-    Addr ip;
+    Crumb current_ip;
+    std::array<Addr,4> ip;
     std::shared_ptr<rom_rack> roms;
     std::shared_ptr<ram_rack> rams;
     std::shared_ptr<testdevice> tdev;
