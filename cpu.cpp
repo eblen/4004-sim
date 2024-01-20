@@ -342,7 +342,8 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // TCS
         case 0b11111001:
-            assert(false);
+            acc = (carry == 0) ? 9 : 10;
+            carry = 0;
             break;
         // STC
         case 0b11111010:
@@ -350,17 +351,31 @@ void CPU4004::exec_instr(Byte b1, Byte b2)
             break;
         // DAA
         case 0b11111011:
-            assert(false);
+            if ((carry == 1) || (acc > 9))
+            {
+                Bit carry_out = 0;
+                // Careful: this addition does not use the carry, and also it
+                // sets the carry ONLY if there was a carry...
+                acc = ADD(acc, 6, 0, carry_out);
+                if (carry_out == 1) carry = 1;
+            }
             break;
         // KBP
         case 0b11111100:
-            assert(false);
+            switch (acc)
+            {
+                case 0:  acc =  0; break;
+                case 1:  acc =  1; break;
+                case 2:  acc =  2; break;
+                case 4:  acc =  3; break;
+                case 8:  acc =  4; break;
+                default: acc = 15;
+            }
             break;
         // DCL
         case 0b11111101:
             assert(false);
             break;
-        // WRM
         default:
             throw InvalidInstr();
     }
