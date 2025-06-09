@@ -10,7 +10,7 @@ class CPU4004
     void run();
     void connect(std::shared_ptr<rom_rack>   r) {roms = r;}
     void connect(std::shared_ptr<ram_rack>   r) {rams = r;}
-    void connect(std::shared_ptr<testdevice> t) {tdev = t;}
+    void connect_test_port(std::shared_ptr<testdevice> t) {tdev = t;}
 
     private:
     // Basic hardware (flags, pins, and registers)

@@ -7,42 +7,85 @@
 #include "types.h"
 #include "iodevice.h"
 
-enum class IOTYPE {in,out};
-class ROM4001 : public iodevice
+class ROM4001
 {
     public:
     void load(const std::array<Byte,256>& d) {data = d;}
     void load(const std::vector<Byte>& d);
-    void set_iotype(IOTYPE t) {iotype = t;}
 
     Byte read(Byte b) {return data[b];}
 
-    void connect(std::shared_ptr<iodevice> d) {device = d;}
-
-    // Just forward input from the connected device
-    Nibble port_input()
+    // Shortcut to connect ports 0-3 to the same ports on the device
+    void connect_all(IOTYPE t, std::shared_ptr<iodevice> d)
     {
-        if (!device)
-            throw std::runtime_error("ROM port not connected");
-        if (iotype != IOTYPE::in)
-            throw std::runtime_error("ROM port not configured for input");
-        return device->port_input();
+        for (int i=0; i<4; i++) connect(t, d, i, i);
     }
 
-    // Just forwards output to the connected device
-    void port_output(Nibble val)
+    void connect(IOTYPE t, std::shared_ptr<iodevice> d, int rom_port_id, int device_port_id)
     {
-        if (!device)
-            throw std::runtime_error("ROM port not connected");
-        if (iotype != IOTYPE::out)
-            throw std::runtime_error("ROM port not configured for output");
-        device->port_output(val);
+        assert((rom_port_id >= 0) && (rom_port_id <= 3));
+        io_conn &ioc = conns[rom_port_id];
+        if (ioc.is_connected)
+            throw std::runtime_error("ROM port already connected");
+        ioc.connect(t, d, device_port_id);
+    }
+
+    // Gather bits into a single nibble
+    Nibble port_input()
+    {
+        Nibble n = 0;
+        Bit ignore;
+
+        for (int i=0; i<4; i++)
+        {
+            n = RAR(n, port_input_bit(i), ignore);
+        }
+        return n;
+    }
+
+    // Split nibble output into individual bits
+    void port_output(Nibble n)
+    {
+        for (int i=0; i<4; i++)
+        {
+            port_output(i, get_bit(n, i));
+        }
     }
 
     private:
+    // Just forward input from the connected device
+    // TODO: Currently, non-connected or non-input ports return 0, but the
+    // manual says the ROM can be configured to return 1 instead.
+    Bit port_input_bit(int port_id)
+    {
+        assert((port_id >= 0) && (port_id <= 3));
+        io_conn &ioc = conns[port_id];
+
+        if (!ioc.is_connected || ioc.iotype != IOTYPE::in)
+        {
+            return 0;
+        }
+
+        else
+        {
+            return ioc.device->port_input(port_id);
+        }
+    }
+
+    // Just forwards output to the connected device
+    void port_output(int port_id, Bit val)
+    {
+        assert((port_id >= 0) && (port_id <= 3));
+        io_conn &ioc = conns[port_id];
+        if (!ioc.is_connected)
+            throw std::runtime_error("ROM port not connected");
+        if (ioc.iotype != IOTYPE::out)
+            throw std::runtime_error("ROM port not configured for output");
+        ioc.device->port_output(port_id, val);
+    }
+
     std::array<Byte,256> data;
-    IOTYPE iotype{IOTYPE::in};
-    std::shared_ptr<iodevice> device;
+    io_conn conns[4];
 };
 
 using rom_rack = std::vector<ROM4001>;

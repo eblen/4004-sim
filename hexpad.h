@@ -5,21 +5,29 @@
 #include "iodevice.h"
 
 // A simple input device for inputting hexadecimal digits
+// Ports 0-3 report user input (a nibble)
+// The test input indicates when new user input is available.
+//
+// Device clears test input when one of the ports is read.
+// Since this allows for new user input, fast typing could
+// cause garbled input. Ideally, it would only clear after
+// all ports are read, but this is just an example device.
 class Hexpad: public iodevice, public testdevice
 {
     public:
     Hexpad() :user_input(0), input_ready(false) {}
 
-    // Input one nibble at a time upon request.
-    Nibble port_input()
+    // Input one bit at a time upon request.
+    Bit port_input(int port_id)
     {
+        assert((port_id >= 0) && (port_id <= 3));
         std::lock_guard<std::mutex> l(kb_buffer_mutex);
         input_ready = false;
-        return user_input;
+        return get_bit(user_input, port_id);
     }
 
     // No output capability
-    void port_output(Nibble val) {}
+    void port_output(int port_id, Bit val) {}
 
     // Indicates whether input is available.
     Bit test() {

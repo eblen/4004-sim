@@ -14,7 +14,6 @@
 struct MooGame
 {
     MooGame() {
-        // Only a single rom and ram are needed for this application.
         roms  = std::make_shared<rom_rack>(2);
         rams  = std::make_shared<ram_rack>(1);
         cpu   = std::make_shared<CPU4004>();
@@ -22,12 +21,12 @@ struct MooGame
         htape = std::make_shared<Hextape>();
 
         // Connect all the parts together.
-        roms->at(0).set_iotype(IOTYPE::in);
-        roms->at(0).connect(hpad);
-        rams->at(0).connect(htape);
+        roms->at(0).connect_all(IOTYPE::in, hpad);
+        rams->at(0).connect_all(htape);
+
         cpu->connect(roms);
         cpu->connect(rams);
-        cpu->connect(hpad);
+        cpu->connect_test_port(hpad);
     }
 
     std::shared_ptr<rom_rack> roms;
