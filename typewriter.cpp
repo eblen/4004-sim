@@ -22,12 +22,11 @@ struct Typewriter
         tape = std::make_shared<Tape>();
 
         // Connect all the parts together.
-        roms->at(0).set_iotype(IOTYPE::in);
-        roms->at(0).connect(kb);
-        rams->at(0).connect(tape);
+        roms->at(0).connect_all(IOTYPE::in, kb);
+        rams->at(0).connect_all(tape);
         cpu->connect(roms);
         cpu->connect(rams);
-        cpu->connect(kb);
+        cpu->connect_test_port(kb);
     }
 
     std::shared_ptr<rom_rack> roms;

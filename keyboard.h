@@ -8,21 +8,37 @@
 class Keyboard : public iodevice, public testdevice
 {
     public:
-    Keyboard() :buffer{0,0}, num_input_nibbles(0) {}
+    Keyboard() :buffer{0,0}, bit_read_status(0), num_input_nibbles(0) {}
 
     // Input one nibble at a time upon request.
-    Nibble port_input()
+    Bit port_input(int port_id)
     {
+        assert((port_id >= 0) && (port_id <= 3));
+        // Avoid by only calling when "test" returns true
+        assert(num_input_nibbles > 0);
+
         std::lock_guard<std::mutex> l(kb_buffer_mutex);
-        Nibble ret_val = buffer[0];
-        buffer[0] = buffer[1];
-        buffer[1] = 0;
-        num_input_nibbles--;
+
+        // Indicates bit was read twice for the same nibble
+        if (get_bit(bit_read_status, port_id) == 1) assert(false);
+
+        bit_read_status = set_bit(bit_read_status, port_id, 1);
+        Nibble ret_val = get_bit(buffer[0], port_id);
+
+        // All bits read for the current nibble. Reset for the next.
+        if (bit_read_status == 15)
+        {
+            buffer[0] = buffer[1];
+            buffer[1] = 0;
+            bit_read_status = 0;
+            num_input_nibbles--;
+        }
+
         return ret_val;
     }
 
     // No output capability
-    void port_output(Nibble val) {}
+    void port_output(int port_id, Bit val) {}
 
     // Indicates whether there are nibbles to be read.
     // (User must keep track of whether nibble is high or low.)
@@ -51,6 +67,7 @@ class Keyboard : public iodevice, public testdevice
 
     private:
     Nibble buffer[2];
+    Nibble bit_read_status;
     Crumb num_input_nibbles;
     std::mutex kb_buffer_mutex;
 };
