@@ -13,7 +13,7 @@
 class Tape : public iodevice
 {
     public:
-    Tape() :buffer_idx(false), buffer{0,0}, num_bits_set(0)
+    Tape() :row(0), col(0), buffer_idx(false), buffer{0,0}, num_bits_set(0)
     {
         initscr();
         cbreak();
@@ -34,17 +34,28 @@ class Tape : public iodevice
         if (num_bits_set < 4) return;
         else num_bits_set = 0;
 
-       if (buffer_idx == 1)
-       {
-           char c = byte_to_char(nibbles_to_byte(buffer[0], buffer[1]));
-           printw("%c",c);
-           refresh();
-       }
+        const Byte RETURN_KEY = 10;
+        if (buffer_idx == 1)
+        {
+            Byte to_print = byte_to_char(nibbles_to_byte(buffer[0], buffer[1]));
+            if (to_print == RETURN_KEY)
+            {
+                row++;
+                col = 0;
+            }
+            else
+            {
+                mvprintw(row, col, "%d", to_print);
+                col++;
+                refresh();
+            }
+        }
 
-       buffer_idx = buffer_idx == 0 ? 1:0;
+        buffer_idx = buffer_idx == 0 ? 1:0;
     }
 
     private:
+    int row, col;
     bool buffer_idx;
     Nibble buffer[2];
     int num_bits_set;
