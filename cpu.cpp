@@ -1,4 +1,5 @@
 #include <bitset>
+#include <cassert>
 #include <sstream>
 #include "cpu.h"
 #include "logger.h"

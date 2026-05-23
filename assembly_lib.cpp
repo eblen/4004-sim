@@ -1,3 +1,4 @@
+#include <cassert>
 #include <map>
 #include <sstream>
 #include <string>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <cassert>
 #include <iostream>
 
 using Addr   = uint16_t; // Addresses are 12 bits
