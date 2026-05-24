@@ -4,6 +4,7 @@
 
 #include "types.h"
 #include "iodevice.h"
+#include "shifter.h"
 
 // A simple input device for debugging
 
@@ -22,8 +23,10 @@ class Keyboard : public iodevice, public testdevice
 {
     public:
     Keyboard() :maxx(0), maxy(0), buffer{0,0}, bit_read_status(0), input_column(0),
-                num_input_nibbles(0), input(0), clock(0), input_was_set(0), clock_was_set(0),
-                shifter(0x001) {}
+                num_input_nibbles(0)
+    {
+        shifter = std::make_shared<Shifter4003>();
+    }
 
     // The Busicom keyboard reports what key is pressed (assuming only one)
     // for the column indicated by the shifter. To avoid timing and interface
@@ -46,7 +49,8 @@ class Keyboard : public iodevice, public testdevice
         bit_read_status = set_bit(bit_read_status, port_id, 1);
 
 	// Return bit in buffer only if shifter points to the correct column
-	Bit ret_val = shifter.test(input_column) ? get_bit(buffer[0], port_id) : 0;
+	// Note that 0 indicates the active column (not 1).
+	Bit ret_val = shifter->is_set(input_column) ? 0 : get_bit(buffer[0], port_id);
 
         // All bits read for the current nibble. Reset for the next.
         if (bit_read_status == 15)
@@ -60,65 +64,20 @@ class Keyboard : public iodevice, public testdevice
         return ret_val;
     }
 
-    // Shifter input is tricky because of the other input, the clock.
-    // From what I can tell:
-    // 1) Shifter input is stored but not shifted in until the clock goes from 0 to 1.
-    // 2) New shifter input will override this stored value (a one-bit buffer)
-    // 3) It is not possible to guarantee that the input signal arrives ahead of
-    //    the clock signal when both are set simultaneously.
-    // 4) The Busicom fixes this by adding a hardware delay so that the input
-    //    signal always arrives first. Thus, the Busicom just sends either 01
-    //    or 11 to shift in 0 or 1, and then sends 00 to "reset" the shifter for
-    //    more input (first bit is ignored and could be 1).
-
-    // To handle this in software, we will assume that the two bits are always
-    // sent as a pair and simply wait for both before processing. We assert that
-    // they alternate and also assert that the clock always changes.
-    // We could just ignore the clock and only shift every other input, but the
-    // above strategy allows us to check our assumptions.
-    // We are also further assuming no race condition where one bit arrives twice
-    // before the other even though they are sent as pairs (can't happen in our
-    // current implementation).
-    void port_output(int port_id, Bit val)
-    {
-        assert((port_id == 0) || (port_id == 1));
-        if (port_id == 0)
-        {
-            // Ensure setting of input and clock alternate
-            if (input_was_set) assert(false);
-
-            input_was_set = true;
-            input = val;
-        }
-        else
-        {
-            // Ensure setting of input and clock alternate
-            if (clock_was_set) assert(false);
-            // Ensure clock always changes
-
-            if (clock == val) assert(false);
-            clock_was_set = true;
-            clock = val;
-        }
-
-        if (input_was_set && clock_was_set)
-        {
-            if (clock == 1)
-            {
-                shifter <<= 1;
-                if (input == 0x000) input = 0x001;
-            }
-
-            input_was_set = false;
-            clock_was_set = false;
-        }
-    }
+    // No output capability
+    void port_output(int port_id, Bit val) {}
 
     // Indicates whether there are nibbles to be read.
     // (User must keep track of whether nibble is high or low.)
     Bit test() {
         std::lock_guard<std::mutex> l(kb_buffer_mutex);
         return (num_input_nibbles != 0);
+    }
+
+    // The attached shifter functions like every other io device, so give the
+    // user full access.
+    std::shared_ptr<Shifter4003> get_shifter() {
+	return shifter;
     }
 
     // User can input a single char at a time, which is broken into 2 nibbles.
@@ -159,7 +118,7 @@ class Keyboard : public iodevice, public testdevice
 
     private:
 
-    // Variables for interacting with user
+    std::shared_ptr<Shifter4003> shifter;
 
     // Currently we only support 0-9, space, and return
     #define NUM_KEYS 12
@@ -176,13 +135,6 @@ class Keyboard : public iodevice, public testdevice
     Nibble bit_read_status;
     Crumb num_input_nibbles;
     std::mutex kb_buffer_mutex;
-
-    // Variables for interacting with system
-    Bit input;
-    Bit clock;
-    Bit input_was_set;
-    Bit clock_was_set;
-    std::bitset<10> shifter;
 
     // Compute key positions and print the keyboard
     void init_keyboard()
