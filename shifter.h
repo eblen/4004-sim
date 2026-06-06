@@ -11,7 +11,7 @@
 class Shifter4003 : public iodevice
 {
     public:
-    Shifter4003() :input(0), clock(0), input_was_set(0), clock_was_set(0), bits(0x3FF) {}
+    Shifter4003() :input(0), clock(0), input_was_set(false), clock_was_set(false), bits(0x3FF) {}
 
     // No input capability
     Bit port_input(int port_id) {return 0;}
@@ -41,23 +41,23 @@ class Shifter4003 : public iodevice
     void port_output(int port_id, Bit val)
     {
         assert((port_id == 0) || (port_id == 1));
+	// Clock
         if (port_id == 0)
-        {
-            // Ensure setting of input and clock alternate
-            if (input_was_set) assert(false);
-
-            input_was_set = true;
-            input = val;
-        }
-        else
         {
             // Ensure setting of input and clock alternate
             if (clock_was_set) assert(false);
             // Ensure clock always changes
-
             if (clock == val) assert(false);
             clock_was_set = true;
             clock = val;
+        }
+	// Input
+        else
+        {
+            // Ensure setting of input and clock alternate
+            if (input_was_set) assert(false);
+            input_was_set = true;
+            input = val;
         }
 
         if (input_was_set && clock_was_set)
@@ -65,7 +65,7 @@ class Shifter4003 : public iodevice
             if (clock == 1)
             {
                 bits <<= 1;
-                if (input == 0x000) input = 0x001;
+                if (input == 1) bits.set(0);
             }
 
             input_was_set = false;
