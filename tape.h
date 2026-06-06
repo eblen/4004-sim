@@ -37,7 +37,7 @@ class Tape : public iodevice
         const Byte RETURN_KEY = 10;
         if (buffer_idx == 1)
         {
-            Byte to_print = byte_to_char(nibbles_to_byte(buffer[0], buffer[1]));
+            char to_print = byte_to_char(nibbles_to_byte(buffer[0], buffer[1]));
             if (to_print == RETURN_KEY)
             {
                 row++;
@@ -45,7 +45,7 @@ class Tape : public iodevice
             }
             else
             {
-                mvprintw(row, col, "%d", to_print);
+                mvprintw(row, col, "%c", to_print);
                 col++;
                 refresh();
             }
