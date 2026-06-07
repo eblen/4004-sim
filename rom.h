@@ -49,10 +49,10 @@ class ROM4001
     {
         for (int i=0; i<4; i++)
         {
-	    if (conns[i].is_connected)
-	    {
+            if (conns[i].is_connected)
+            {
                 port_output(i, get_bit(n, i));
-	    }
+            }
         }
     }
 

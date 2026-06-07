@@ -40,14 +40,14 @@ class Keyboard : public iodevice, public testdevice
 
         std::lock_guard<std::mutex> l(kb_buffer_mutex);
 
-	if (!key_was_pressed()) return 0;
+        if (!key_was_pressed()) return 0;
 
-	// Note that 0 indicates the active column (not 1).
-	if (!shifter->is_set(input_col) && input_row == port_id) {
-	    clear_pressed_key();
-	    return 1;
-	}
-	return 0;
+        // Note that 0 indicates the active column (not 1).
+        if (!shifter->is_set(input_col) && input_row == port_id) {
+            clear_pressed_key();
+            return 1;
+        }
+        return 0;
     }
 
     // No output capability
@@ -63,7 +63,7 @@ class Keyboard : public iodevice, public testdevice
     // The attached shifter functions like every other io device, so give the
     // user full access.
     std::shared_ptr<Shifter4003> get_shifter() const {
-	return shifter;
+        return shifter;
     }
 
     void run()
@@ -95,28 +95,28 @@ class Keyboard : public iodevice, public testdevice
     // Compute key positions and print the keyboard
     void init_keyboard()
     {
-	const char key_matrix[NUM_ROWS][NUM_COLS] =
-	{
-	    {'1', '2', '3'},
-	    {'4', '5', '6'},
-	    {'7', '8', '9'},
-	    {' ', '0', 'R'},
-	};
+        const char key_matrix[NUM_ROWS][NUM_COLS] =
+        {
+            {'1', '2', '3'},
+            {'4', '5', '6'},
+            {'7', '8', '9'},
+            {' ', '0', 'R'},
+        };
 
         const int start_row = getmaxy(stdscr) * 2 / 3;
         const int start_col = 10;
         const int row_spaces = 3;
         const int col_spaces = 2;
 
-	for (int i=0; i<NUM_ROWS; i++)
-	{
-	    row_pos[i] = start_row + i*row_spaces;
+        for (int i=0; i<NUM_ROWS; i++)
+        {
+            row_pos[i] = start_row + i*row_spaces;
             for (int j=0; j<NUM_COLS; j++)
-	    {
-	        col_pos[j] = start_col + j*col_spaces;
-		mvprintw(row_pos[i], col_pos[j], "%c", key_matrix[i][j]);
-	    }
-	}
+            {
+                col_pos[j] = start_col + j*col_spaces;
+                mvprintw(row_pos[i], col_pos[j], "%c", key_matrix[i][j]);
+            }
+        }
     }
 
     // Convenience functions
@@ -148,27 +148,27 @@ class Keyboard : public iodevice, public testdevice
     // specific row or column.
     void set_clicked_key(int xmouse, int ymouse)
     {
-	// Do not overwrite any current, stored key press
-	if (key_was_pressed()) return;
+        // Do not overwrite any current, stored key press
+        if (key_was_pressed()) return;
 
-	input_row = -1;
-	for (int i=0; i<NUM_ROWS; i++)
-	{
-	    if (ymouse == row_pos[i])
-	    {
-	       input_row = i;
-	       break;
-	    }
-	}
+        input_row = -1;
+        for (int i=0; i<NUM_ROWS; i++)
+        {
+            if (ymouse == row_pos[i])
+            {
+               input_row = i;
+               break;
+            }
+        }
 
-	input_col = -1;
-	for (int i=0; i<NUM_COLS; i++)
-	{
-	    if (xmouse == col_pos[i])
-	    {
-	       input_col = i;
-	       break;
-	    }
-	}
+        input_col = -1;
+        for (int i=0; i<NUM_COLS; i++)
+        {
+            if (xmouse == col_pos[i])
+            {
+               input_col = i;
+               break;
+            }
+        }
     }
 };

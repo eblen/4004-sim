@@ -41,7 +41,7 @@ class Shifter4003 : public iodevice
     void port_output(int port_id, Bit val)
     {
         assert((port_id == 0) || (port_id == 1));
-	// Clock
+        // Clock
         if (port_id == 0)
         {
             // Ensure setting of input and clock alternate
@@ -51,7 +51,7 @@ class Shifter4003 : public iodevice
             clock_was_set = true;
             clock = val;
         }
-	// Input
+        // Input
         else
         {
             // Ensure setting of input and clock alternate
@@ -74,8 +74,8 @@ class Shifter4003 : public iodevice
     }
 
     bool is_set(int i) const {
-	assert(i >= 0 && i <= 9);
-	return bits.test(i);
+        assert(i >= 0 && i <= 9);
+        return bits.test(i);
     }
 
     private:
